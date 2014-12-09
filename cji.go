@@ -11,8 +11,8 @@ var defaultErrResponder ErrResponderFunc = func(c web.C, w http.ResponseWriter, 
 	w.Write([]byte(err.Error()))
 }
 
-type HandlerFunc func(web.C, http.ResponseWriter, *http.Request, func(int, error))
-
+type RaiseFunc func(int, error)
+type HandlerFunc func(web.C, http.ResponseWriter, *http.Request, RaiseFunc)
 type ErrResponderFunc func(web.C, http.ResponseWriter, *http.Request, int, error)
 
 type cji struct {
