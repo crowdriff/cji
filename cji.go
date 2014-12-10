@@ -1,3 +1,7 @@
+/*
+
+*/
+
 package cji
 
 import (
@@ -6,57 +10,45 @@ import (
 	"github.com/zenazn/goji/web"
 )
 
-var defaultErrResponder ErrResponderFunc = func(c web.C, w http.ResponseWriter, r *http.Request, status int, err error) {
-	w.WriteHeader(status)
-	w.Write([]byte(err.Error()))
-}
-
-type RaiseFunc func(int, error)
-type HandlerFunc func(web.C, http.ResponseWriter, *http.Request, RaiseFunc)
-type ErrResponderFunc func(web.C, http.ResponseWriter, *http.Request, int, error)
+// Goji's middleware type signature
+type MiddlewareFunc func(*web.C, http.Handler) http.Handler
 
 type cji struct {
-	handlers     []HandlerFunc
-	errResponder ErrResponderFunc
+	middlewares []MiddlewareFunc
 }
 
-func Link(handlers ...HandlerFunc) *cji {
-	return &cji{handlers: handlers}
+func Use(middlewares ...MiddlewareFunc) *cji {
+	return &cji{middlewares: middlewares}
 }
 
-func SetErrResponder(errResponder ErrResponderFunc) {
-	defaultErrResponder = errResponder
+//Compose together the middleware chain and wrap the handler with it
+func (j *cji) On(handler web.HandlerFunc) web.HandlerFunc {
+	//if len(j.middlewares) == 0 {
+	//TODO handle error better
+	//panic()
+	////	} else {
+	m := (wrap(j.middlewares[0]))(handler)
+	for i := len(j.middlewares) - 2; i >= 0; i-- {
+		f := wrap(j.middlewares[i])
+		m = f(m)
+	}
+	return m
 }
 
-func (j *cji) To(handler web.HandlerFunc) web.HandlerFunc {
-	return web.HandlerFunc(func(c web.C, w http.ResponseWriter, r *http.Request) {
-		var status int
-		var err error
-		for _, h := range j.handlers {
-			h(c, w, r, func(rStatus int, rErr error) {
-				status = rStatus
-				err = rErr
-			})
-			if err != nil {
-				var respondErr ErrResponderFunc = defaultErrResponder
-				if j.errResponder != nil {
-					respondErr = j.errResponder
-				}
-				respondErr(c, w, r, status, err)
-				return
+// wrap takes a middleware that works on http.Handler and returns a function that takes a web.HandlerFunc and returns a web.HandlerFunc. We use this to wrap HandlerFuncs with
+func wrap(middleware MiddlewareFunc) func(web.HandlerFunc) web.HandlerFunc {
+	fn := func(hf web.HandlerFunc) web.HandlerFunc {
+		return func(c web.C, w http.ResponseWriter, r *http.Request) {
+			newFn := func(ww http.ResponseWriter, rr *http.Request) {
+				hf(c, ww, rr)
+			}
+			fn, ok := middleware(&c, http.HandlerFunc(newFn)).(http.HandlerFunc)
+			if ok {
+				fn(w, r)
+			} else {
+				// something went wrong!
 			}
 		}
-		handler(c, w, r)
-	})
-}
-
-func (j *cji) Link(handlers ...HandlerFunc) *cji {
-	jj := &cji{handlers: j.handlers, errResponder: j.errResponder}
-	jj.handlers = append(jj.handlers, handlers...)
-	return jj
-}
-
-func (j *cji) WithErrResponder(errResponder ErrResponderFunc) *cji {
-	j.errResponder = errResponder
-	return j
+	}
+	return fn
 }
