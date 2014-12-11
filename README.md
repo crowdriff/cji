@@ -21,7 +21,7 @@ admin.Get("/", AdminRoot)
 
 Becomes:
 
-```
+```go
 m.Use(someMiddleware)
 m.Get("/one", handlerOne)
 admin.Get("/", cji.Use(PasswordMiddleware, HttpsOnlyMiddleware).On(AdminRoot))
