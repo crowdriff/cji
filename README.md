@@ -32,7 +32,7 @@ We find this useful for middlewares that lookup objects in the database and hand
 ```go
 m.Get("/posts/:postId", cji.Use(PostContext).On(GetPost))
 
-func HubContext(c *web.C, h http.Handler) http.Handler {
+func PostContext(c *web.C, h http.Handler) http.Handler {
     fn := func(w http.ResponseWriter, r *http.Request) {
         user := c.Env["user"].(*data.User)
         postId = c.URLParams["postId"])
@@ -48,9 +48,9 @@ func HubContext(c *web.C, h http.Handler) http.Handler {
     return http.HandlerFunc(fn)
 }
 
-func (h *FeedHandler) GetFeed(c web.C, w http.ResponseWriter, r *http.Request) {
-    feed := c.Env["feed"].(*data.Feed)
-    h.JSON(w, 200, feed)
+func GetPost(c web.C, w http.ResponseWriter, r *http.Request) {
+    post := c.Env["post"].(*data.Post)
+    h.JSON(w, 200, post)
 }
 ```
 
