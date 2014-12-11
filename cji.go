@@ -1,10 +1,7 @@
-/*
-
-*/
-
 package cji
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/zenazn/goji/web"
@@ -18,24 +15,41 @@ type cji struct {
 }
 
 func Use(middlewares ...MiddlewareFunc) *cji {
-	return &cji{middlewares: middlewares}
+	return &cji{middlewares}
 }
 
-//Compose together the middleware chain and wrap the handler with it
-func (j *cji) On(handler web.HandlerFunc) web.HandlerFunc {
-	//if len(j.middlewares) == 0 {
-	//TODO handle error better
-	//panic()
-	////	} else {
-	m := (wrap(j.middlewares[0]))(handler)
-	for i := len(j.middlewares) - 2; i >= 0; i-- {
-		f := wrap(j.middlewares[i])
+func (z *cji) Use(middlewares ...MiddlewareFunc) *cji {
+	mw := z.middlewares
+	mw = append(mw, middlewares...)
+	return &cji{mw}
+}
+
+// Compose together the middleware chain and wrap the handler with it
+func (z *cji) On(handler interface{}) web.HandlerFunc {
+	var hfn web.HandlerFunc
+	switch t := handler.(type) {
+	case web.Handler:
+		hfn = t.ServeHTTPC
+	case func(web.C, http.ResponseWriter, *http.Request): // web.HandlerFunc
+		hfn = t
+	default:
+		panic(fmt.Sprintf("unsupported handler type: %T", t))
+	}
+
+	if len(z.middlewares) == 0 {
+		return hfn
+	}
+
+	m := wrap(z.middlewares[len(z.middlewares)-1])(hfn)
+	for i := len(z.middlewares) - 2; i >= 0; i-- {
+		f := wrap(z.middlewares[i])
 		m = f(m)
 	}
 	return m
 }
 
-// wrap takes a middleware that works on http.Handler and returns a function that takes a web.HandlerFunc and returns a web.HandlerFunc. We use this to wrap HandlerFuncs with
+// Wrap takes a middleware that works on http.Handler and returns a function that
+// takes a web.HandlerFunc and returns a web.HandlerFunc. We use this to wrap HandlerFuncs
 func wrap(middleware MiddlewareFunc) func(web.HandlerFunc) web.HandlerFunc {
 	fn := func(hf web.HandlerFunc) web.HandlerFunc {
 		return func(c web.C, w http.ResponseWriter, r *http.Request) {
@@ -46,7 +60,7 @@ func wrap(middleware MiddlewareFunc) func(web.HandlerFunc) web.HandlerFunc {
 			if ok {
 				fn(w, r)
 			} else {
-				// something went wrong!
+				panic("unsupported handler passed to the chain!")
 			}
 		}
 	}

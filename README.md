@@ -7,7 +7,7 @@ chi allows you to use middlewares for a single route without creating a new hand
 
 For instance
 
-```
+```go
 m.Use(someMiddleware)
 m.Get("/one", handlerOne)
 admin:= web.New()
@@ -54,4 +54,4 @@ func (h *FeedHandler) GetFeed(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-Authors: @pkieltyka & @mveytsman
+Authors: [@pkieltyka](https://github.com/pkieltyka) & [@mveytsman](https://github.com/mveytsman)
