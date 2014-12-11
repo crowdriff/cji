@@ -29,7 +29,7 @@ admin.Get("/", cji.Use(PasswordMiddleware, HttpsOnlyMiddleware).On(AdminRoot))
 
 We find this useful for middlewares that lookup objects in the database and handle authorization
 
-```
+```go
 m.Get("/posts/:postId", cji.Use(PostContext).On(GetPost))
 
 func HubContext(c *web.C, h http.Handler) http.Handler {
