@@ -8,11 +8,12 @@ chi allows you to use middlewares for a single route without creating a new hand
 For instance
 
 ```go
+m := web.New()
 m.Use(someMiddleware)
 m.Get("/one", handlerOne)
-admin:= web.New()
-m.Handle("/admin", admin)
 
+admin := web.New()
+m.Handle("/admin", admin)
 admin.Use(middleware.SubRouter)
 admin.Use(PasswordMiddleware)
 admin.Use(HttpsOnlyMiddleware)
@@ -22,9 +23,10 @@ admin.Get("/", AdminRoot)
 Becomes:
 
 ```go
+m := web.New()
 m.Use(someMiddleware)
 m.Get("/one", handlerOne)
-admin.Get("/", cji.Use(PasswordMiddleware, HttpsOnlyMiddleware).On(AdminRoot))
+m.Get("/admin", cji.Use(PasswordMiddleware, HttpsOnlyMiddleware).On(AdminRoot))
 ```
 
 We find this useful for middlewares that lookup objects in the database and handle authorization
