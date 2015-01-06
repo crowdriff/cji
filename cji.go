@@ -37,6 +37,10 @@ func (z *cji) On(handler interface{}) web.HandlerFunc {
 		hfn = t.ServeHTTPC
 	case func(web.C, http.ResponseWriter, *http.Request): // web.HandlerFunc
 		hfn = t
+	case func(http.ResponseWriter, *http.Request): // http.HandlerFunc
+		hfn = func(c web.C, w http.ResponseWriter, r *http.Request) {
+			t(w, r)
+		}
 	default:
 		panic(fmt.Sprintf("unsupported handler type: %T", t))
 	}
