@@ -7,16 +7,16 @@ import (
 	"github.com/zenazn/goji/web"
 )
 
-type cji struct {
+type Cji struct {
 	middlewares []interface{}
 }
 
-func Use(middlewares ...interface{}) *cji {
-	return (&cji{}).Use(middlewares...)
+func Use(middlewares ...interface{}) *Cji {
+	return (&Cji{}).Use(middlewares...)
 }
 
-func (z *cji) Use(middlewares ...interface{}) *cji {
-	c := &cji{z.middlewares}
+func (z *Cji) Use(middlewares ...interface{}) *Cji {
+	c := &Cji{z.middlewares}
 	for _, mw := range middlewares {
 		switch t := mw.(type) {
 		default:
@@ -30,7 +30,7 @@ func (z *cji) Use(middlewares ...interface{}) *cji {
 }
 
 // Compose together the middleware chain and wrap the handler with it
-func (z *cji) On(handler interface{}) web.HandlerFunc {
+func (z *Cji) On(handler interface{}) web.HandlerFunc {
 	var hfn web.HandlerFunc
 	switch t := handler.(type) {
 	case web.Handler:
